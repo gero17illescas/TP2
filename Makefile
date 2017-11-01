@@ -7,9 +7,9 @@
 #	make run: Corre el programa
 #	make valgrind: Chequea perdida de memoria
 
-EXEC = heap
-CFILES = main.c heap.c pruebas_heap.c testing.c
-HFILES = heap.h testing.h
+EXEC = Pruebas_ip
+CFILES = Pruebas_ip.c strutil.c
+HFILES = strutil.h
 
 CC = gcc
 CFLAGS = -g -std=c99 -Wall
@@ -37,6 +37,9 @@ debug: all
 
 todo: all
 	valgrind $(VFLAGS) ./$(EXEC) $(LOG_VALGRIND)
-	
+
+clean:
+	rm $(EXEC) *.txt
+
 $(EXEC): $(CFILES) $(HFILES)
 	$(CC) $(CFLAGS) $(CFILES) -o $(EXEC)
