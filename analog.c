@@ -2,17 +2,24 @@
 
 #define _XOPEN_SOURCE           //time
 #define TIME_FORMAT "%FT%T%z"
+#define AGREGAR "agregar_archivo"
+#define VISITANTES "ver_visitantes"
+#define VISITADOS "ver_visitados"
+#define ERROR "Error en comando %s\n"
+#define BUFFERSIZE 100
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 #include "strutil.h"
+#include "abb.h"
 #include "hash.h"
 
 typedef struct recurse {
-	char* nombre;
+	const char* nombre;
 	int cant;
 }recurso_t;
 
@@ -24,6 +31,16 @@ int cmp_heap(void* dato_1,void* dato_2){
 	if(recurso_1->cant > recurso_2->cant)
 		return -1;
 	return 0;
+}
+
+bool es_numero(char* input){
+	size_t largo = strlen(input);
+	for(size_t i = 0; i < largo; i++){
+		if(input[i] == '.') i++;
+		if(!isdigit(input[i]))
+			return false;
+	}
+	return true;
 }
 
 /*
@@ -41,7 +58,7 @@ time_t iso8601_to_time(const char* iso8601){
  * Devuleve un bool segun si el comando que se ingreso es posible
  *  ejecutar correctamente o no.
  */
-bool verificar_comando(char** strv, size_t strvc,char** comando){
+bool verificar_comando(char** strv, size_t strvc,char* comando){
 	size_t i = 0;
 	while(strv[i])
 		i++;
@@ -54,7 +71,7 @@ bool verificar_comando(char** strv, size_t strvc,char** comando){
  *       0      si  ip1 == ip2
  *   mayor a 0  si  ip1 > ip2
  */
-int cmp_ip(char* ip1,char* ip2){
+int cmp_ip(const char* ip1, const char* ip2){
 	char** strv_1 = split(ip1,'.');
 	char** strv_2 = split(ip2,'.');
 
@@ -72,25 +89,24 @@ int cmp_ip(char* ip1,char* ip2){
 }
 bool analizar_dos (abb_t* abb_ip,char** strv){
 	char* ip = strv[0];	char* fecha= strv[1];
-
-	if((hash_t* hash_ip = abb_obtener(abb_ip,ip))){
-
-		if(*hash_obtener(hash_ip,"dos")==1)	return true; //Cuidado si es null
+    hash_t* hash_ip = abb_obtener(abb_ip,ip);
+	if(hash_ip){
+		if(hash_obtener(hash_ip,"dos")==1)	return true; //Cuidado si es null
 		//si para esa ip ya hay dos no se hace nada, pues ya tuvo un ataque.
 
 		time_t utlima_fecha = iso8601_to_time(hash_obtener(hash_ip,"ultima_fecha"));
 		time_t ultima_fecha = iso8601_to_time(fecha);
-		double dif_tiempo = difftime(ultimo_fecha,ultima_fecha);
+		double dif_tiempo = difftime(ultima_fecha,ultima_fecha);
 
 		if(dif_tiempo<2){
-			int* cont_dos = *hash_obtener(hash_ip,"cont_dos")); 
-			*(cont_dos)++;
+            int* cont_dos = (int*) hash_obtener(hash_ip,"cont_dos");
+            (*(cont_dos))++;
 			if(*cont_dos==5){
 				*cont_dos=0;
-				*dos = 1
-				if(!hash_guardar(hash_ip,"dos",dos))	return false;
+				int dos = 1;//Asumo que esto es lo que querias hacer
+				if(!hash_guardar(hash_ip,"dos", &dos))	return false;
 				if(!hash_guardar(hash_ip,"ultima_fecha",fecha)) return false;
-				printf("DoS: &s\n",ip);
+				printf("DoS: %s\n",ip);
 			}
 			if(!hash_guardar(hash_ip,"dos",cont_dos)) return false;
 		}
@@ -109,17 +125,19 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 	if(!hash_guardar(hash_ip,"dos",dos))			return false;
 	if(!hash_guardar(hash_ip,"ultima_fecha",fecha))	return false;
 
-	return abb_guardar(abb_ipp,ip,hash_ip);
+	return abb_guardar(abb_ip,ip,hash_ip);
 
 }
 bool analizar_resources(hash_t* hash_resources,char** strv){
 	char* resource = strv[3];
-	if((int* cont = hash_obtener(hash,resource))){
+    int* cont;
+	if((cont = hash_obtener(hash_resources,resource)){
 		(*cont)++;
 		return hash_guardar(hash_resources,resource,cont);
-	}
-	int* cont = malloc(sizeof(int*));
+	}else{
+	cont = malloc(sizeof(int*));
 	*cont = 1;
+    }
 	return hash_guardar(hash_resources,resource,cont);
 
 }
@@ -128,25 +146,24 @@ bool analizar_resources(hash_t* hash_resources,char** strv){
  * devuelve NULL. Si el archivo existe y esta vacio devuelve una lista
  * vacia.
  */
-
-void agregar_archivo(char* file){
-	FILE* archivo = fopen(file_name,"r");
+void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
+	FILE* archivo = fopen(file,"r");
 	if (archivo == NULL){
 		fprintf(stderr,"Hubo un problema al procesar el comando.\n");
-		return NULL;
+		return;
 	}
 
 	char* linea = NULL; size_t capacidad = 0; //combo getline
 	char** strv;
 	bool ok; bool ok2;
 
-	while((leidos = getline(&linea,&capacidad,FILE)) > 0){
+	while(getline(&linea,&capacidad, archivo) > 0){
 		strv = split(linea,'\t');
 		//208.115.111.72	2015-05-17T11:05:15+00:00	GET	/corrector.html
-		ok = analizar_dos(abb_ipp,strv);
+		ok = analizar_dos(abb_ip,strv);
 		ok2= analizar_resources(hash_resources,strv);
+        free_strv(strv);
 	}
-	destruir_strv(strv);
 	free(linea);
 	fclose(archivo);
 	if(ok && ok2)
@@ -157,22 +174,22 @@ void agregar_archivo(char* file){
 
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
 	iter_t* iter = crear_inorder_acotado(abb_ip,inicio,final);
-	printf("Visitantes:")
+	printf("Visitantes:");
 	while(!abb_iter_in_al_final(iter)){
-		printf("\t%s",abb_iter_in_ver_actual(iter))
+		printf("\t%s",abb_iter_in_ver_actual(iter));
 	}
-	printf("OK")
+	printf("OK");
 	abb_iter_in_destruir(iter);
 }
 void ver_mas_visitados(hash_t* hash_resources,int n){
 	
-	hash_iter_t* iter = hash_iter(hash_resources);
-	heap_t * heap = heap_crear(cmp_heap);
+	hash_iter_t* iter = hash_iter_crear(hash_resources);
+	heap_t* heap = heap_crear(cmp_heap);
 	int i=0;
 	while(!hash_iter_al_final(iter) && i<n){
 		recurso_t* recurso = malloc(sizeof(recurso_t*));
 		recurso->nombre = hash_iter_ver_actual(iter);
-		recurso->cant = hash_obtener(hash_resources,recurso->nombre);
+		recurso->cant = *(int*)hash_obtener(hash_resources,recurso->nombre);
 		heap_encolar(heap,recurso);
 		hash_iter_avanzar(iter);
 		i++;
@@ -180,7 +197,7 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 	while(!hash_iter_al_final(iter)){
 		recurso_t* recurso = malloc(sizeof(recurso_t*));
 		recurso->nombre = hash_iter_ver_actual(iter);
-		recurso->cant = hash_obtener(hash_resources,recurso->nombre);
+		recurso->cant = *(int*)hash_obtener(hash_resources,recurso->nombre);
 		if(recurso->cant>heap_ver_max(heap)){ //es ver_min
 			free(heap_desencolar(heap));
 			heap_encolar(heap,recurso);
@@ -188,8 +205,8 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 		hash_iter_avanzar(iter);
 	}
 	printf("Sitios más visitados:");
-	while(!heap_esta_vacio(heap))
-		recurso_t* recurso = heap_desencolar(heap)
+	while(!heap_esta_vacio(heap)){
+		recurso_t* recurso = heap_desencolar(heap);
 		printf("\t%s - %d\n",recurso->nombre,recurso->cant);
 		free(recurso);
 	}
@@ -200,28 +217,29 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 /* *****************************************************************
  *               	     FUNCION PRINCIPAL
  * *****************************************************************/
-int main(int argc, char* argv[] ){
-	if (argc != 1){
-		printf("Opcion invalida. Vuelva a ingresar\n");
-		return 0;
-	}
-
-	char* linea = NULL; size_t capacidad = 0; ssize_t leidos; //combo getline
+int main(int argc, char* argv[]){
+    size_t buffersize = BUFFERSIZE;
+    char* buffer  = malloc(sizeof(char) * buffersize);
+    if(!buffer)
+        return 0;
 
 	hash_t* hash_resources = hash_crear(free);
-	abb_t* abb_ip = abb_crear(cmp_ip,hash_destruir);
+	abb_t* abb_ip = abb_crear(cmp_ip, (void*)hash_destruir);
 
-	while((leidos = getline(&linea,&capacidad,stdin)) > 0){
-		char** strv = split(linea,' ');
-		if(verificar_comando(strv,2,agregar_archivo))	agregar_archivo(abb_ip, hash_resources, strv[1]);
-		if(verificar_comando(strv,3,ver_visitantes))	ver_visitantes(abb_ip,strv[1],strv[2]);
-		if(verificar_comando(strv,2,ver_mas_visitados))	ver_mas_visitados(hash_resources,strv[1]);
-
+    while(getline(&buffer, &buffersize, stdin) > 0){
+		char** strv = split(buffer,' ');
+		if(verificar_comando(strv,2, AGREGAR))	agregar_archivo(abb_ip, hash_resources, strv[1]);
+		if(verificar_comando(strv,3, VISITANTES))	ver_visitantes(abb_ip,strv[1],strv[2]);
+		if(verificar_comando(strv,2, VISITADOS) && es_numero(strv[1])) {
+			int n = strtol(strv[1], NULL, 10);
+			ver_mas_visitados(hash_resources, n);
+		}
 		fprintf(stderr,"Error en comando %s\n",strv[0]);
+        free(buffer);
 		free_strv(strv);
 		break;
 	}
 	hash_destruir(hash_resources);
-	abb_destruir(abb_ip)
+	abb_destruir(abb_ip);
 	return 0;
 }
