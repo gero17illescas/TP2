@@ -19,17 +19,17 @@ typedef struct nodo {
 	void *dato;
 }abb_nodo_t;
 
-typedef struct abb {
+struct abb {
 	abb_nodo_t* raiz;
 	abb_comparar_clave_t cmp;
 	abb_destruir_dato_t destruir_dato;
 	size_t cant_nodos;
-}abb_t;
+};
 
-typedef struct abb_iter{
+struct abb_iter{
 	abb_nodo_t* actual;
 	pila_t* pila;
-}abb_iter_t;
+};
 
 
 /* *****************************************************************
