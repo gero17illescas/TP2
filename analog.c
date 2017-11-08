@@ -10,6 +10,7 @@
 #include <time.h>
 #include "strutil.h"
 #include "hash.h"
+#include "abb.h"
 
 typedef struct recurse {
 	char* nombre;
@@ -41,7 +42,7 @@ time_t iso8601_to_time(const char* iso8601){
  * Devuleve un bool segun si el comando que se ingreso es posible
  *  ejecutar correctamente o no.
  */
-bool verificar_comando(char** strv, size_t strvc,char** comando){
+bool verificar_comando(char** strv, size_t strvc,const char* comando){
 	size_t i = 0;
 	while(strv[i])
 		i++;
@@ -72,19 +73,19 @@ int cmp_ip(char* ip1,char* ip2){
 }
 bool analizar_dos (abb_t* abb_ip,char** strv){
 	char* ip = strv[0];	char* fecha= strv[1];
+	hash_t* hash_ip;
+	if((hash_ip = abb_obtener(abb_ip,ip))){
 
-	if((hash_t* hash_ip = abb_obtener(abb_ip,ip))){
-
-		if(*hash_obtener(hash_ip,"dos")==1)	return true; //Cuidado si es null
+		if((*hash_obtener(hash_ip,"dos"))==1)	return true; //Cuidado si es null
 		//si para esa ip ya hay dos no se hace nada, pues ya tuvo un ataque.
 
 		time_t utlima_fecha = iso8601_to_time(hash_obtener(hash_ip,"ultima_fecha"));
-		time_t ultima_fecha = iso8601_to_time(fecha);
-		double dif_tiempo = difftime(ultimo_fecha,ultima_fecha);
+		time_t nueva_fecha = iso8601_to_time(fecha);
+		double dif_tiempo = difftime(utlima_fecha,nueva_fecha);
 
 		if(dif_tiempo<2){
-			int* cont_dos = *hash_obtener(hash_ip,"cont_dos")); 
-			*(cont_dos)++;
+			int* cont_dos = (*hash_obtener(hash_ip,"cont_dos")); 
+			(*cont_dos)++;
 			if(*cont_dos==5){
 				*cont_dos=0;
 				*dos = 1
@@ -114,11 +115,12 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 }
 bool analizar_resources(hash_t* hash_resources,char** strv){
 	char* resource = strv[3];
-	if((int* cont = hash_obtener(hash,resource))){
+	int* cont;
+	if((cont = hash_obtener(hash,resource))){
 		(*cont)++;
 		return hash_guardar(hash_resources,resource,cont);
 	}
-	int* cont = malloc(sizeof(int*));
+	cont = malloc(sizeof(int*));
 	*cont = 1;
 	return hash_guardar(hash_resources,resource,cont);
 
@@ -130,13 +132,13 @@ bool analizar_resources(hash_t* hash_resources,char** strv){
  */
 
 void agregar_archivo(char* file){
-	FILE* archivo = fopen(file_name,"r");
+	FILE* archivo = fopen(file,"r");
 	if (archivo == NULL){
 		fprintf(stderr,"Hubo un problema al procesar el comando.\n");
-		return NULL;
+		return;
 	}
 
-	char* linea = NULL; size_t capacidad = 0; //combo getline
+	char* linea = NULL; size_t capacidad = 0; ssize_t leidos;  //combo getline
 	char** strv;
 	bool ok; bool ok2;
 
@@ -188,10 +190,12 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 		hash_iter_avanzar(iter);
 	}
 	printf("Sitios más visitados:");
-	while(!heap_esta_vacio(heap))
+	i=0;
+	while(!heap_esta_vacio(heap) && i<n){
 		recurso_t* recurso = heap_desencolar(heap)
 		printf("\t%s - %d\n",recurso->nombre,recurso->cant);
 		free(recurso);
+		i++
 	}
 	heap_destruir(heap,free); //es un simple free puesto que no quiero liberar la cadena
 	//del racurso->nombre ya que esta almacenada en el hash.
@@ -213,9 +217,9 @@ int main(int argc, char* argv[] ){
 
 	while((leidos = getline(&linea,&capacidad,stdin)) > 0){
 		char** strv = split(linea,' ');
-		if(verificar_comando(strv,2,agregar_archivo))	agregar_archivo(abb_ip, hash_resources, strv[1]);
-		if(verificar_comando(strv,3,ver_visitantes))	ver_visitantes(abb_ip,strv[1],strv[2]);
-		if(verificar_comando(strv,2,ver_mas_visitados))	ver_mas_visitados(hash_resources,strv[1]);
+		if(verificar_comando(strv,2,"agregar_archivo"))	agregar_archivo(abb_ip, hash_resources, strv[1]);
+		if(verificar_comando(strv,3,"ver_visitantes"))	ver_visitantes(abb_ip,strv[1],strv[2]);
+		if(verificar_comando(strv,2,"ver_mas_visitados"))	ver_mas_visitados(hash_resources,strv[1]);
 
 		fprintf(stderr,"Error en comando %s\n",strv[0]);
 		free_strv(strv);
