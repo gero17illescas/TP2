@@ -98,8 +98,6 @@ time_t actualizar_fechas(time_t *primera_fecha,time_t *actual_fecha){
 	aux->tm_mday = act_fecha->tm_mday - (act_fecha->tm_mday - prim_fecha->tm_mday);
 	aux->tm_mon = act_fecha->tm_mon - (act_fecha->tm_mon - prim_fecha->tm_mon);
 	aux->tm_year = act_fecha->tm_year - (act_fecha->tm_year - prim_fecha->tm_year);
-	aux->tm_wday = act_fecha->tm_wday - (act_fecha->tm_wday - prim_fecha->t_fecham_wday);
-	aux->tm_yday = act_fecha->tm_yday - (act_fecha->tm_yday - prim_fecha->t_fecham_yday);
 	aux->tm_isdst = act_fecha->tm_isdst - (act_fecha->tm_isdst - prim_fecha->tm_isdst);
 	time_t nueva_fecha = mktime(aux);
 	free(aux);
@@ -120,7 +118,7 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 
 		double dif_tiempo = difftime(primera_fecha,actual_fecha);
 
-		c_solicitudes = hash_obtener(hash_ip,"cantidad solicitudes"); 
+		c_solicitudes = hash_obtener(hash_ip,"solicitudes"); 
 		(*c_solicitudes)++;
 
 		if(dif_tiempo<2 && *c_solicitudes>4){	//vemos si en un intervalo menor a 2 hubo 5 solicitudes
@@ -143,7 +141,7 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 	*c_solicitudes=0;
 	*dos=0;
 
-	if(!hash_guardar(hash_ip,"cantidad solicitudes",c_solicitudes))	return false;
+	if(!hash_guardar(hash_ip,"solicitudes",c_solicitudes))	return false;
 	if(!hash_guardar(hash_ip,"dos",dos))			return false;
 	if(!hash_guardar(hash_ip,"primera fecha",fecha))	return false;
 
@@ -180,10 +178,8 @@ void ver_dos(abb_t* abb_ip){
  */
 void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	FILE* archivo = fopen(file,"r");
-	if (archivo == NULL){
-		fprintf(stderr,"Hubo un problema al procesar el comando.\n");
+	if (archivo == NULL)
 		return;
-	}
 
 	char* linea = NULL; size_t capacidad = 0; //combo getline
 	char** strv;
@@ -202,8 +198,6 @@ void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 		ver_dos(abb_ip);
 		printf("OK");
 	}
-	else 
-		fprintf(stderr,"Hubo un problema al procesar el comando.\n");
 }
 
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
@@ -236,7 +230,7 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 		recurso->cant = *(int*)hash_obtener(hash_resources,recurso->nombre);
 		recurso_t* aux = heap_ver_max(heap);
 		if(recurso->cant > aux->cant){ //es ver_min
-			recurso_t* aux = heap_desencolar(heap);
+			aux = heap_desencolar(heap);
 			free(aux);
 			heap_encolar(heap,recurso);
 		}else

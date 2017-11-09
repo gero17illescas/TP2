@@ -7,9 +7,9 @@
 #	make run: Corre el programa
 #	make valgrind: Chequea perdida de memoria
 
-EXEC = Pruebas_ip
-CFILES = Pruebas_ip.c strutil.c
-HFILES = strutil.h
+EXEC = analog
+CFILES = analog.c strutil.c heap.c hash.c abb.c pila.c lista.c
+HFILES = strutil.h heap.h hash.h abb.h pila.h lista.h
 
 CC = gcc
 CFLAGS = -g -std=c99 -Wall
@@ -19,7 +19,6 @@ VFLAGS = --leak-check=full --track-origins=yes --show-reachable=yes
 GDBFLAGS = -tui
 LOG_VALGRIND = 2>&1 | tee valgrind.txt
 LOG_GCC = 2>&1 | tee gcc.txt
-
 all: $(EXEC)
 
 run: all
