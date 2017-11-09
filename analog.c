@@ -23,7 +23,8 @@ typedef struct recurso {
 	int cant;
 }recurso_t;
 
-int cmp_heap(const void* dato_1,const void* dato_2){
+
+int cmp_heap(void* dato_1,void* dato_2){
 	recurso_t* recurso_1 = dato_1;
 	recurso_t* recurso_2 = dato_2;
 	if(recurso_1->cant < recurso_2->cant)
@@ -87,46 +88,64 @@ int cmp_ip(const char* ip1, const char* ip2){
 	return i;
 
 }
+time_t actualizar_fechas(time_t *primera_fecha,time_t *actual_fecha){
+	struct tm* prim_fecha = gmtime(primera_fecha); //paso a estructura para restales los seg
+	struct tm* act_fecha = gmtime(actual_fecha);
+	struct tm* aux= malloc(sizeof(struct tm*));
+	aux->tm_sec = act_fecha->tm_sec - (act_fecha->tm_sec - prim_fecha->tm_sec);
+	aux->tm_min = act_fecha->tm_min - (act_fecha->tm_min - prim_fecha->tm_min);
+	aux->tm_hour = act_fecha->tm_hour - (act_fecha->tm_hour - prim_fecha->tm_hour);
+	aux->tm_mday = act_fecha->tm_mday - (act_fecha->tm_mday - prim_fecha->tm_mday);
+	aux->tm_mon = act_fecha->tm_mon - (act_fecha->tm_mon - prim_fecha->tm_mon);
+	aux->tm_year = act_fecha->tm_year - (act_fecha->tm_year - prim_fecha->tm_year);
+	aux->tm_wday = act_fecha->tm_wday - (act_fecha->tm_wday - prim_fecha->t_fecham_wday);
+	aux->tm_yday = act_fecha->tm_yday - (act_fecha->tm_yday - prim_fecha->t_fecham_yday);
+	aux->tm_isdst = act_fecha->tm_isdst - (act_fecha->tm_isdst - prim_fecha->tm_isdst);
+	time_t nueva_fecha = mktime(aux);
+	free(aux);
+	return nueva_fecha;
+}
 bool analizar_dos (abb_t* abb_ip,char** strv){
 	char* ip = strv[0];	char* fecha= strv[1];
-	int* cont_dos;
+	int* c_solicitudes;
 	hash_t* hash_ip = abb_obtener(abb_ip,ip);
 	
-	if(hash_ip){
+	if(hash_ip){ //si hay una ip en el arbol la analizamos
 		int* cant_dos = hash_obtener(hash_ip,"dos");
-		if(*cant_dos==1)	return true; //Cuidado si es null
-		//si para esa ip ya hay dos no se hace nada, pues ya tuvo un ataque.
+		if(!cant_dos)	return false;
+		if(*cant_dos==1)	return true;	//si para esa ip ya hay dos no se hace nada, pues ya tuvo un ataque.
 
-		time_t utlima_fecha = iso8601_to_time(hash_obtener(hash_ip,"ultima_fecha"));
-		time_t nueva_fecha = iso8601_to_time(fecha);
-		double dif_tiempo = difftime(utlima_fecha,nueva_fecha);
+		time_t primera_fecha = iso8601_to_time(hash_obtener(hash_ip,"primera fecha"));
+		time_t actual_fecha = iso8601_to_time(fecha);
 
-		if(dif_tiempo<2){
-			cont_dos = hash_obtener(hash_ip,"cont_dos"); 
-			(*cont_dos)++;
-			if(*cont_dos==5){
-				*cont_dos=0;
-				int dos = 1;//Asumo que esto es lo que querias hacer
-				if(!hash_guardar(hash_ip,"dos", &dos))	return false;
-				if(!hash_guardar(hash_ip,"ultima_fecha",fecha)) return false;
-				printf("DoS: %s\n",ip);
-			}
-			if(!hash_guardar(hash_ip,"dos",cont_dos)) return false;
+		double dif_tiempo = difftime(primera_fecha,actual_fecha);
+
+		c_solicitudes = hash_obtener(hash_ip,"cantidad solicitudes"); 
+		(*c_solicitudes)++;
+
+		if(dif_tiempo<2 && *c_solicitudes>4){	//vemos si en un intervalo menor a 2 hubo 5 solicitudes
+			int dos = 1;
+			if(!hash_guardar(hash_ip,"dos", &dos))	return false;
+		}else{
+			(*c_solicitudes)--;
+			time_t nueva_fecha = actualizar_fechas(&primera_fecha,&actual_fecha);
+			char* nueva_fecha_str = ctime(&nueva_fecha); //movemos el indicador de tiempo
+			if(!hash_guardar(hash_ip,"primera fecha",nueva_fecha_str)) return false;
 		}
-		else
-			if(!hash_guardar(hash_ip,"ultima_fecha",fecha)) return false;
-		return true;
-	}
 
-	cont_dos =  malloc(sizeof(int*));
+		return hash_guardar(hash_ip,"dos",c_solicitudes);
+	}
+	//todo esto pasa si la ip no esta en el arbol
+
+	c_solicitudes =  malloc(sizeof(int*));
 	int* dos = malloc(sizeof(int*));
 
-	*cont_dos=0;
+	*c_solicitudes=0;
 	*dos=0;
 
-	if(!hash_guardar(hash_ip,"cont_dos",cont_dos))	return false;
+	if(!hash_guardar(hash_ip,"cantidad solicitudes",c_solicitudes))	return false;
 	if(!hash_guardar(hash_ip,"dos",dos))			return false;
-	if(!hash_guardar(hash_ip,"ultima_fecha",fecha))	return false;
+	if(!hash_guardar(hash_ip,"primera fecha",fecha))	return false;
 
 	return abb_guardar(abb_ip,ip,hash_ip);
 
@@ -142,6 +161,17 @@ bool analizar_resources(hash_t* hash_resources,char** strv){
 	*cont = 1;
 	return hash_guardar(hash_resources,resource,cont);
 
+}
+void ver_dos(abb_t* abb_ip){
+	abb_iter_t* iter = abb_iter_in_crear(abb_ip);
+	while(!abb_iter_in_al_final(iter)){
+		const char* ip = abb_iter_in_ver_actual(iter);
+		hash_t* hash_ip = abb_obtener(abb_ip,ip);
+		int *cant_dos = hash_obtener(hash_ip,"dos");
+		if(*cant_dos==1)
+			printf("DoS: %s\n",ip);
+		abb_iter_in_avanzar(iter);
+	}
 }
 /* Recibe un archivo, verifica si lo puede abrir y devuelve una lista
  * de usuarios en memoria dinamica. Si hubo un problema con el arhcivo
@@ -161,23 +191,23 @@ void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 
 	while(getline(&linea,&capacidad, archivo) > 0){
 		strv = split(linea,'\t');
-		//208.115.111.72	2015-05-17T11:05:15+00:00	GET	/corrector.html
 		ok = analizar_dos(abb_ip,strv);
 		ok2= analizar_resources(hash_resources,strv);
         free_strv(strv);
 	}
-
 	free(linea);
 	fclose(archivo);
 
-	if(ok && ok2)
+	if(ok && ok2){
+		ver_dos(abb_ip);
 		printf("OK");
+	}
 	else 
 		fprintf(stderr,"Hubo un problema al procesar el comando.\n");
 }
 
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
-	abb_iter_t* iter = crear_inorder_acotado(abb_ip,inicio,final);
+	abb_iter_t* iter = crear_iter_inorder_acotado(abb_ip,inicio,final);
 	printf("Visitantes:");
 	while(!abb_iter_in_al_final(iter)){
 		printf("\t%s",abb_iter_in_ver_actual(iter));
@@ -185,11 +215,13 @@ void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
 	printf("OK");
 	abb_iter_in_destruir(iter);
 }
+
 void ver_mas_visitados(hash_t* hash_resources,int n){
 	
 	hash_iter_t* iter = hash_iter_crear(hash_resources);
-	heap_t* heap = heap_crear(cmp_heap);
+	heap_t* heap = heap_crear((cmp_func_t) cmp_heap);
 	int i=0;
+
 	while(!hash_iter_al_final(iter) && i<n){
 		recurso_t* recurso = malloc(sizeof(recurso_t*));
 		recurso->nombre = hash_iter_ver_actual(iter);
@@ -213,7 +245,7 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 		hash_iter_avanzar(iter);
 	}
 	printf("Sitios más visitados:");
-	}
+	
 	heap_destruir(heap,free); //es un simple free puesto que no quiero liberar la cadena
 	printf("OK");
 }
@@ -227,7 +259,7 @@ int main(int argc, char* argv[]){
         return 0;
 
 	hash_t* hash_resources = hash_crear(free);
-	abb_t* abb_ip = abb_crear(cmp_ip,hash_destruir);
+	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) hash_destruir);
 
     while(getline(&buffer, &buffersize, stdin) > 0){
 		char** strv = split(buffer,' ');

@@ -21,17 +21,6 @@ struct heap{
 	size_t tam;
 };
 
-/* Prototipo de función de comparación que se le pasa como parámetro a las
- * diversas funciones del heap.
- * Debe recibir dos punteros del tipo de dato utilizado en el heap, y
- * debe devolver:
- *   menor a 0  si  a < b
- *       0      si  a == b
- *   mayor a 0  si  a > b
- */
-
-typedef int (*cmp_func_t) (const void *a, const void *b);
-
 /* *****************************************************************
  *                DEFINICION DE FUNCIONES AUXILIARES
  * *****************************************************************/
