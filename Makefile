@@ -19,6 +19,7 @@ VFLAGS = --leak-check=full --track-origins=yes --show-reachable=yes
 GDBFLAGS = -tui
 LOG_VALGRIND = 2>&1 | tee valgrind.txt
 LOG_GCC = 2>&1 | tee gcc.txt
+EJECUCION = 0<ejecucion.txt
 all: $(EXEC)
 
 run: all
@@ -29,7 +30,7 @@ runtime: all
 
 valgrind: all
 	$(EXEC) $(LOG_GCC)
-	valgrind $(VFLAGS) ./$(EXEC) $(LOG_VALGRIND)
+	valgrind $(VFLAGS) ./$(EXEC) $(EJECUCION) $(LOG_VALGRIND) 
 
 debug: all
 	gdb $(GDBFLAGS) ./$(EXEC) 
