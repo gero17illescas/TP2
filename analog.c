@@ -118,7 +118,7 @@ time_t iso8601_to_time(const char* iso8601){
  * algun problema en pedir memoria devuelve NULL.
  */
 solicitud_t* crear_solicitud(const char* fecha){
-	solicitud_t* solicitud =  malloc(sizeof(solicitud_t*));
+	solicitud_t* solicitud =  malloc(sizeof(solicitud_t));
 	if(!solicitud) return NULL;
 	solicitud->dos = false;
 	solicitud->cant = 0;
@@ -132,7 +132,7 @@ solicitud_t* crear_solicitud(const char* fecha){
  * algun problema en pedir memoria devuelve NULL.
  */
 recurso_t* crear_recurso(hash_t* hash,hash_iter_t* iter){
-	recurso_t* recurso =  malloc(sizeof(solicitud_t*));
+	recurso_t* recurso =  malloc(sizeof(solicitud_t));
 	if(!recurso) return NULL;
 
 	const char* clave = hash_iter_ver_actual(iter);
@@ -194,8 +194,8 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
  */
 bool analizar_resources(hash_t* hash_resources,char** strv){
 	char* resource = strv[3];
-    int* cont;
-	if((cont = hash_obtener(hash_resources,resource))){
+    int* cont = hash_obtener(hash_resources,resource);
+	if(cont){
 		(*cont)++;
 		return hash_guardar(hash_resources,resource,cont);
 	}
@@ -213,6 +213,7 @@ void ver_dos(abb_t* abb_ip){
 	while(!abb_iter_in_al_final(iter)){
 		const char* ip = abb_iter_in_ver_actual(iter);
 		solicitud_t* solicitud = abb_obtener(abb_ip,ip);
+		printf("%s",ip);
 		if(solicitud->dos)
 			printf("DoS: %s\n",ip);
 		abb_iter_in_avanzar(iter);
