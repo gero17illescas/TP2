@@ -17,6 +17,7 @@
 #include "abb.h"
 #include "hash.h"
 #include "heap.h"
+#include "cola.h"
 
 typedef struct recurso {
 	const char* nombre;
@@ -24,9 +25,9 @@ typedef struct recurso {
 }recurso_t;
 
 typedef struct solicitud{
-	size_t cant;
+	size_t cant_solicitudes;
 	bool dos;
-	time_t fecha;
+	cola_t* fechas;
 }solicitud_t;
 
 /* *****************************************************************
@@ -71,6 +72,10 @@ int cmp_ip(const char* ip1, const char* ip2){
 	free_strv(strv_2);
 	return i;
 
+}
+
+void destruir_solicitud(solicitud_t* solicitud){
+    cola_destruir(solicitud->fechas, NULL);
 }
 
 /* 
@@ -120,9 +125,12 @@ time_t iso8601_to_time(const char* iso8601){
 solicitud_t* crear_solicitud(const char* fecha){
 	solicitud_t* solicitud =  malloc(sizeof(solicitud_t));
 	if(!solicitud) return NULL;
+    cola_t* cola = cola_crear();
+    if(!cola) return NULL;
 	solicitud->dos = false;
-	solicitud->cant = 0;
-	solicitud->fecha = iso8601_to_time(fecha);
+	solicitud->fechas = cola;
+    cola_encolar(solicitud->fechas, &fecha);
+    solicitud->cant_solicitudes = 1;
 	return solicitud;
 }
 
@@ -155,6 +163,9 @@ time_t actualizar_fechas(time_t *primera_fecha,time_t *actual_fecha){
 	return mktime(&aux);
 }
 
+/* ****************************************************************
+   *                           COMANDOS                           *
+   **************************************************************** */
 
 /*
  * Recibe un arbol binario de busqueda y un vector de cadenas, y actualiza
@@ -162,31 +173,33 @@ time_t actualizar_fechas(time_t *primera_fecha,time_t *actual_fecha){
  * realizando un ataque de denegacion de servicios
  */
 bool analizar_dos (abb_t* abb_ip,char** strv){
-	const char* ip = strv[0];	const char* fecha= strv[1];
-	solicitud_t* solicitud = abb_obtener(abb_ip,ip);
-	//si hay una ip en el arbol la analizamos
-	if(solicitud){ 
-		if(solicitud->dos)	return true;	
+    const char* ip = strv[0];    const char* fecha= strv[1];
+    solicitud_t* solicitud = abb_obtener(abb_ip,ip);
+    //si hay una ip en el arbol la analizamos
+    if(solicitud){
+        if(solicitud->dos)    return true;
 
-		time_t primera_fecha = solicitud->fecha;
-		time_t actual_fecha = iso8601_to_time(fecha);
-		double dif_tiempo = difftime(primera_fecha,actual_fecha);
+        time_t fecha_actual = iso8601_to_time(fecha);
+        double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),fecha_actual);
 
-		solicitud->cant++;
+        if(dif_tiempo<2) {
+            cola_encolar(solicitud->fechas, &fecha_actual);
+            solicitud->cant_solicitudes++;
+        }else{
+            while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), fecha_actual) >= 2){
+                cola_desencolar(solicitud->fechas);
+                solicitud->cant_solicitudes--;
+            }
+        }
+        if(solicitud->cant_solicitudes > 4)
+            solicitud->dos = true;
+        return true;
+    }
 
-		if(dif_tiempo<2 && solicitud->cant>4)	//vemos si en un intervalo menor a 2 hubo 5 solicitudes
-			solicitud->dos = true;
-		else{
-			solicitud->cant--;
-			solicitud->fecha = actualizar_fechas(&primera_fecha,&actual_fecha);
-		}
-		return true;
-	}
-
-	//todo esto pasa si la ip no esta en el arbol
-	solicitud = crear_solicitud(fecha);
-	if(!solicitud) return false;
-	return abb_guardar(abb_ip,ip,solicitud);
+    //todo esto pasa si la ip no esta en el arbol
+    solicitud = crear_solicitud(fecha);
+    if(!solicitud) return false;
+    return abb_guardar(abb_ip,ip,solicitud);
 
 }
 /*
@@ -273,10 +286,10 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
  * devuelve NULL. Si el archivo existe y esta vacio devuelve una lista
  * vacia.
  */
-void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
+bool agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	FILE* archivo = fopen(file,"r");
 	if (archivo == NULL)
-		return;
+		return false;
 
 	char* linea = NULL; size_t capacidad = 0; //combo getline
 	char** strv;
@@ -294,7 +307,9 @@ void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	if(ok && ok2){
 		ver_dos(abb_ip);
 		printf("OK\n");
+        return true;
 	}
+    return false;
 }
 
 /* *****************************************************************
@@ -307,17 +322,28 @@ int main(int argc, char* argv[]){
         return 0;
 
 	hash_t* hash_resources = hash_crear(free);
-	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) free);
+	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) destruir_solicitud);
 
-    while(getline(&buffer, &buffersize, stdin) > 0){
-		char** strv = split(buffer,' ');
-		if(verificar_comando(strv,2, "agregar_archivo"))agregar_archivo(abb_ip, hash_resources, strv[1]);
-		if(verificar_comando(strv,3, "ver_visitantes"))	ver_visitantes(abb_ip,strv[1],strv[2]);
-		if(verificar_comando(strv,2, "ver_mas_visitados") && es_numero(strv[1])) {
+    while(getline(&buffer, &buffersize, stdin) > 0) {
+        char **strv = split(buffer, ' ');
+        if (verificar_comando(strv, 2, AGREGAR)) {
+            if (!agregar_archivo(abb_ip, hash_resources, strv[1])) {
+                free(buffer);
+                fprintf(stderr, ERROR, strv[0]);
+                continue;
+            }
+        }
+        if (verificar_comando(strv, 3, VISITANTES)){
+            ver_visitantes(abb_ip, strv[1], strv[2]);
+            continue;
+        }
+
+		if(verificar_comando(strv,2, VISITADOS) && es_numero(strv[1])) {
 			int n = (int) strtol(strv[1], NULL, 10);
 			ver_mas_visitados(hash_resources, n);
+            continue;
 		}
-        free(buffer);
+        fprintf(stderr, ERROR, strv[0]);
 		free_strv(strv);
 	}
 	hash_destruir(hash_resources);
