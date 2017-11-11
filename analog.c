@@ -7,16 +7,7 @@
 #define ERROR "Error en comando %s\n"
 #define BUFFERSIZE 100
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <time.h>
-#include <ctype.h>
-#include "strutil.h"
-#include "abb.h"
-#include "hash.h"
-#include "heap.h"
+#include "analog.h"
 
 typedef struct recurso {
 	const char* nombre;
@@ -141,21 +132,11 @@ recurso_t* crear_recurso(hash_t* hash,hash_iter_t* iter){
 	recurso->cant=*(int*)hash_obtener(hash,clave);
 	return recurso;
 }
-
-time_t actualizar_fechas(time_t *primera_fecha,time_t *actual_fecha){
-	struct tm* prim_fecha = gmtime(primera_fecha); //paso a estructura para restales los seg
-	struct tm* act_fecha = gmtime(actual_fecha);
-	struct tm aux= {0};
-	aux.tm_sec = prim_fecha->tm_sec + (act_fecha->tm_sec - prim_fecha->tm_sec);
-	aux.tm_min = prim_fecha->tm_min + (act_fecha->tm_min - prim_fecha->tm_min);
-	aux.tm_hour = prim_fecha->tm_hour + (act_fecha->tm_hour - prim_fecha->tm_hour);
-	aux.tm_mday = prim_fecha->tm_mday + (act_fecha->tm_mday - prim_fecha->tm_mday);
-	aux.tm_mon = prim_fecha->tm_mon + (act_fecha->tm_mon - prim_fecha->tm_mon);
-	aux.tm_year = prim_fecha->tm_year + (act_fecha->tm_year - prim_fecha->tm_year);
-	aux.tm_isdst = prim_fecha->tm_isdst + (act_fecha->tm_isdst - prim_fecha->tm_isdst);
-	return mktime(&aux);
+time_t* crear_fecha(const char* fecha){
+    time_t* fecha_nueva = malloc(sizeof(time_t));
+    *fecha_nueva = iso8601_to_time(fecha);
+    return fecha_nueva;
 }
-
 
 /*
  * Recibe un arbol binario de busqueda y un vector de cadenas, y actualiza
