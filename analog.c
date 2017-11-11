@@ -7,17 +7,7 @@
 #define ERROR "Error en comando %s\n"
 #define BUFFERSIZE 100
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <time.h>
-#include <ctype.h>
-#include "strutil.h"
-#include "abb.h"
-#include "hash.h"
-#include "heap.h"
-#include "cola.h"
+#include "analog.h"
 
 typedef struct recurso {
 	const char* nombre;
@@ -76,6 +66,7 @@ int cmp_ip(const char* ip1, const char* ip2){
 
 void destruir_solicitud(solicitud_t* solicitud){
     cola_destruir(solicitud->fechas, NULL);
+    free(solicitud);
 }
 
 /* 
@@ -117,6 +108,11 @@ time_t iso8601_to_time(const char* iso8601){
 	return mktime(&bktime);
 }
 
+time_t* crear_fecha(const char* fecha){
+    time_t* fecha_nueva = malloc(sizeof(time_t));
+    *fecha_nueva = iso8601_to_time(fecha);
+    return fecha_nueva;
+}
 
 /* 
  * Recibe una fecha por parametro y crea un struct de solicitud. Si hubo
@@ -129,7 +125,9 @@ solicitud_t* crear_solicitud(const char* fecha){
     if(!cola) return NULL;
 	solicitud->dos = false;
 	solicitud->fechas = cola;
-    cola_encolar(solicitud->fechas, &fecha);
+    time_t* fecha_nueva = crear_fecha(fecha);
+    if(!fecha_nueva) return NULL;
+    cola_encolar(solicitud->fechas, fecha_nueva);
     solicitud->cant_solicitudes = 1;
 	return solicitud;
 }
@@ -179,14 +177,14 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
     if(solicitud){
         if(solicitud->dos)    return true;
 
-        time_t fecha_actual = iso8601_to_time(fecha);
-        double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),fecha_actual);
+        time_t* fecha_actual = crear_fecha(fecha);
+        double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),*fecha_actual);
 
         if(dif_tiempo<2) {
             cola_encolar(solicitud->fechas, &fecha_actual);
             solicitud->cant_solicitudes++;
         }else{
-            while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), fecha_actual) >= 2){
+            while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), *fecha_actual) >= 2){
                 cola_desencolar(solicitud->fechas);
                 solicitud->cant_solicitudes--;
             }
