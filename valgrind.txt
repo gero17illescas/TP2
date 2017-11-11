@@ -1,0 +1,260 @@
+==17965== Memcheck, a memory error detector
+==17965== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==17965== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==17965== Command: ./analog
+==17965== 
+==17965== Invalid read of size 4
+==17965==    at 0x401049: analizar_resources (analog.c:200)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Address 0x52230d0 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== Invalid write of size 4
+==17965==    at 0x401052: analizar_resources (analog.c:200)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Address 0x52230d0 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== Invalid free() / delete / delete[] / realloc()
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Address 0x52230d0 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== Invalid write of size 2
+==17965==    at 0x4C32D83: __GI_memcpy (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4EA8A57: getdelim (iogetdelim.c:111)
+==17965==    by 0x4015FB: main (analog.c:313)
+==17965==  Address 0x5204040 is 0 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid write of size 1
+==17965==    at 0x4EA8B0C: getdelim (iogetdelim.c:118)
+==17965==    by 0x4015FB: main (analog.c:313)
+==17965==  Address 0x520405e is 30 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid read of size 1
+==17965==    at 0x4C30F62: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4016C2: eliminar_salto_linea (strutil.c:29)
+==17965==    by 0x40178B: split (strutil.c:48)
+==17965==    by 0x4014EC: main (analog.c:314)
+==17965==  Address 0x5204040 is 0 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid read of size 1
+==17965==    at 0x4C30F74: strlen (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4016C2: eliminar_salto_linea (strutil.c:29)
+==17965==    by 0x40178B: split (strutil.c:48)
+==17965==    by 0x4014EC: main (analog.c:314)
+==17965==  Address 0x5204041 is 1 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid read of size 1
+==17965==    at 0x4016E2: eliminar_salto_linea (strutil.c:34)
+==17965==    by 0x40178B: split (strutil.c:48)
+==17965==    by 0x4014EC: main (analog.c:314)
+==17965==  Address 0x520405d is 29 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid read of size 1
+==17965==    at 0x40172C: eliminar_salto_linea (strutil.c:39)
+==17965==    by 0x40178B: split (strutil.c:48)
+==17965==    by 0x4014EC: main (analog.c:314)
+==17965==  Address 0x5204040 is 0 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid free() / delete / delete[] / realloc()
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Address 0x5204040 is 0 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid write of size 1
+==17965==    at 0x4C32DBB: __GI_memcpy (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4EA8A57: getdelim (iogetdelim.c:111)
+==17965==    by 0x4015FB: main (analog.c:313)
+==17965==  Address 0x5204052 is 18 bytes inside a block of size 100 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4015D5: main (analog.c:321)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40149E: main (analog.c:306)
+==17965== 
+==17965== Invalid read of size 4
+==17965==    at 0x400DE2: crear_recurso (analog.c:141)
+==17965==    by 0x40120A: ver_mas_visitados (analog.c:241)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965==  Address 0x57f4930 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== Invalid read of size 4
+==17965==    at 0x400DE2: crear_recurso (analog.c:141)
+==17965==    by 0x401268: ver_mas_visitados (analog.c:248)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965==  Address 0x569a4f0 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== Conditional jump or move depends on uninitialised value(s)
+==17965==    at 0x4C2EDA1: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401E81: heap_destruir (heap.c:155)
+==17965==    by 0x40134E: ver_mas_visitados (analog.c:267)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965==  Uninitialised value was created by a heap allocation
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401E0F: heap_crear (heap.c:138)
+==17965==    by 0x4011EA: ver_mas_visitados (analog.c:237)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965== 
+==17965== Invalid free() / delete / delete[] / realloc()
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x402150: destruir_campo_hash (hash.c:56)
+==17965==    by 0x402459: destruir_tabla (hash.c:140)
+==17965==    by 0x402AE9: hash_destruir (hash.c:309)
+==17965==    by 0x401610: main (analog.c:324)
+==17965==  Address 0x57f4930 is 0 bytes inside a block of size 8 free'd
+==17965==    at 0x4C2EDEB: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x40287E: hash_guardar (hash.c:235)
+==17965==    by 0x40106A: analizar_resources (analog.c:201)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965==  Block was alloc'd at
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x401076: analizar_resources (analog.c:203)
+==17965==    by 0x4013EE: agregar_archivo (analog.c:289)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+OK
+OK
+Sitios más visitados:
+	/style2.css - 116
+	/ - 129
+	/favicon.ico - 144
+OK
+==17965== 
+==17965== HEAP SUMMARY:
+==17965==     in use at exit: 360 bytes in 10 blocks
+==17965==   total heap usage: 318,989 allocs, 320,521 frees, 8,433,631 bytes allocated
+==17965== 
+==17965== 32 bytes in 1 blocks are definitely lost in loss record 1 of 5
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x402B0E: hash_iter_crear (hash.c:321)
+==17965==    by 0x4011DC: ver_mas_visitados (analog.c:236)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965== 
+==17965== 48 bytes in 2 blocks are indirectly lost in loss record 2 of 5
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x403BA0: pila_crear (pila.c:23)
+==17965==    by 0x4039F3: abb_iter_in_crear (abb.c:397)
+==17965==    by 0x4010B5: ver_dos (analog.c:213)
+==17965==    by 0x401449: agregar_archivo (analog.c:296)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== 72 bytes in 3 blocks are definitely lost in loss record 3 of 5
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x400DA1: crear_recurso (analog.c:136)
+==17965==    by 0x401268: ver_mas_visitados (analog.c:248)
+==17965==    by 0x4015C9: main (analog.c:319)
+==17965== 
+==17965== 128 bytes in 2 blocks are indirectly lost in loss record 4 of 5
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x403BC8: pila_crear (pila.c:28)
+==17965==    by 0x4039F3: abb_iter_in_crear (abb.c:397)
+==17965==    by 0x4010B5: ver_dos (analog.c:213)
+==17965==    by 0x401449: agregar_archivo (analog.c:296)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== 256 (80 direct, 176 indirect) bytes in 2 blocks are definitely lost in loss record 5 of 5
+==17965==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==17965==    by 0x4039D9: abb_iter_in_crear (abb.c:393)
+==17965==    by 0x4010B5: ver_dos (analog.c:213)
+==17965==    by 0x401449: agregar_archivo (analog.c:296)
+==17965==    by 0x401528: main (analog.c:315)
+==17965== 
+==17965== LEAK SUMMARY:
+==17965==    definitely lost: 184 bytes in 6 blocks
+==17965==    indirectly lost: 176 bytes in 4 blocks
+==17965==      possibly lost: 0 bytes in 0 blocks
+==17965==    still reachable: 0 bytes in 0 blocks
+==17965==         suppressed: 0 bytes in 0 blocks
+==17965== 
+==17965== For counts of detected and suppressed errors, rerun with: -v
+==17965== ERROR SUMMARY: 4604 errors from 18 contexts (suppressed: 0 from 0)

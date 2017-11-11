@@ -73,6 +73,7 @@ int cmp_ip(const char* ip1, const char* ip2){
 
 }
 
+
 /* 
  * Recibe una cadena y devuelve true si los elemenetos de la cadena
  * corresponden a caracters numericos. False en caso contrario. Si el 
