@@ -26,7 +26,7 @@ void ver_visitantes(abb_t* abb_ip, char* inicio, char* final);
 
 void ver_mas_visitados(hash_t* hash_resources, int n);
 
-void agregar_archivo(abb_t* abb_ip, hash_t* hash_reesources, char* file);
+bool agregar_archivo(abb_t* abb_ip, hash_t* hash_reesources, char* file);
 
 
 #endif

@@ -8,8 +8,8 @@
 #	make valgrind: Chequea perdida de memoria
 
 EXEC = analog
-CFILES = analog.c strutil.c heap.c hash.c abb.c pila.c lista.c
-HFILES = strutil.h heap.h hash.h abb.h pila.h lista.h
+CFILES = analog.c strutil.c heap.c hash.c abb.c pila.c lista.c cola.c
+HFILES = strutil.h heap.h hash.h abb.h pila.h lista.h cola.h
 
 CC = gcc
 CFLAGS = -g -std=c99 -Wall

@@ -36,7 +36,7 @@ void abb_destruir(abb_t* arbol);
    puntero extra, y devuelve true si se debe seguir iterando, false en caso
    contrario).
  */
-void abb_in_order(abb_t* arbol, bool visitar(const char*, void*, void*), void* extra);
+void abb_in_order(abb_t* arbol, bool visitar(const char*, void*, void*), void* extra,char* inicio,char* final);
 
 /* Primitivas del iterador externo. */
 abb_iter_t* abb_iter_in_crear(const abb_t* arbol);

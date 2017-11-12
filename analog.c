@@ -3,21 +3,20 @@
 #define TIME_FORMAT "%FT%T%z"
 #define AGREGAR "agregar_archivo"
 #define VISITANTES "ver_visitantes"
-#define VISITADOS "ver_visitados"
+#define VISITADOS "ver_mas_visitados"
 #define ERROR "Error en comando %s\n"
 #define BUFFERSIZE 100
 
 #include "analog.h"
-
 typedef struct recurso {
 	const char* nombre;
 	int cant;
 }recurso_t;
 
 typedef struct solicitud{
-	size_t cant;
+	size_t cant_solicitudes;
 	bool dos;
-	time_t fecha;
+	cola_t* fechas;
 }solicitud_t;
 
 /* *****************************************************************
@@ -94,6 +93,12 @@ bool verificar_comando(char** strv, size_t strvc,char* comando){
 	return strcmp(strv[0],comando)==0 && strvc==i;
 }
 
+
+
+void destruir_solicitud(solicitud_t* solicitud){
+    cola_destruir(solicitud->fechas, NULL);
+    free(solicitud);
+}
 /*
  * Dada una cadena en formato ISO-8601 devuelve una variable de tipo time_t
  * que representa un instante en el tiempo.
@@ -104,7 +109,11 @@ time_t iso8601_to_time(const char* iso8601){
 	return mktime(&bktime);
 }
 
-
+time_t* crear_fecha(const char* fecha){
+    time_t* fecha_nueva = malloc(sizeof(time_t));
+    *fecha_nueva = iso8601_to_time(fecha);
+    return fecha_nueva;
+}
 /* 
  * Recibe una fecha por parametro y crea un struct de solicitud. Si hubo
  * algun problema en pedir memoria devuelve NULL.
@@ -112,12 +121,16 @@ time_t iso8601_to_time(const char* iso8601){
 solicitud_t* crear_solicitud(const char* fecha){
 	solicitud_t* solicitud =  malloc(sizeof(solicitud_t));
 	if(!solicitud) return NULL;
+    cola_t* cola = cola_crear();
+    if(!cola) return NULL;
 	solicitud->dos = false;
-	solicitud->cant = 0;
-	solicitud->fecha = iso8601_to_time(fecha);
+	solicitud->fechas = cola;
+    time_t* fecha_nueva = crear_fecha(fecha);
+    if(!fecha_nueva) return NULL;
+    cola_encolar(solicitud->fechas, fecha_nueva);
+    solicitud->cant_solicitudes = 1;
 	return solicitud;
 }
-
 
 /* 
  * Recibe una fecha por parametro y crea un struct de solicitud. Si hubo
@@ -132,11 +145,7 @@ recurso_t* crear_recurso(hash_t* hash,hash_iter_t* iter){
 	recurso->cant=*(int*)hash_obtener(hash,clave);
 	return recurso;
 }
-time_t* crear_fecha(const char* fecha){
-    time_t* fecha_nueva = malloc(sizeof(time_t));
-    *fecha_nueva = iso8601_to_time(fecha);
-    return fecha_nueva;
-}
+
 
 /*
  * Recibe un arbol binario de busqueda y un vector de cadenas, y actualiza
@@ -147,23 +156,26 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 	const char* ip = strv[0];	const char* fecha= strv[1];
 	solicitud_t* solicitud = abb_obtener(abb_ip,ip);
 	//si hay una ip en el arbol la analizamos
-	if(solicitud){ 
-		if(solicitud->dos)	return true;	
+    if(solicitud){
+        if(solicitud->dos)    return true;
 
-		time_t primera_fecha = solicitud->fecha;
-		time_t actual_fecha = iso8601_to_time(fecha);
-		double dif_tiempo = difftime(primera_fecha,actual_fecha);
+        time_t* fecha_actual = crear_fecha(fecha);
+        double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),*fecha_actual);
 
-		solicitud->cant++;
+        if(dif_tiempo<2) {
+            cola_encolar(solicitud->fechas, &fecha_actual);
+            solicitud->cant_solicitudes++;
+        }else{
+            while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), *fecha_actual) >= 2){
+                cola_desencolar(solicitud->fechas);
+                solicitud->cant_solicitudes--;
+            }
+        }
+        if(solicitud->cant_solicitudes > 4)
+            solicitud->dos = true;
+        return true;
+    }
 
-		if(dif_tiempo<2 && solicitud->cant>4)	//vemos si en un intervalo menor a 2 hubo 5 solicitudes
-			solicitud->dos = true;
-		else{
-			solicitud->cant--;
-			solicitud->fecha = actualizar_fechas(&primera_fecha,&actual_fecha);
-		}
-		return true;
-	}
 
 	//todo esto pasa si la ip no esta en el arbol
 	solicitud = crear_solicitud(fecha);
@@ -195,21 +207,18 @@ void ver_dos(abb_t* abb_ip){
 	while(!abb_iter_in_al_final(iter)){
 		const char* ip = abb_iter_in_ver_actual(iter);
 		solicitud_t* solicitud = abb_obtener(abb_ip,ip);
-		printf("%s",ip);
 		if(solicitud->dos)
 			printf("DoS: %s\n",ip);
 		abb_iter_in_avanzar(iter);
 	}
 }
-
+bool imprimir(const char* dato,void* extra,void*extra_1){
+	printf("\t%s\n",dato);
+	return true;
+}
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
-	abb_iter_t* iter = crear_iter_inorder_acotado(abb_ip,inicio,final);
-	printf("Visitantes:\n");
-	while(!abb_iter_in_al_final(iter)){
-		printf("\t%s",abb_iter_in_ver_actual(iter));
-	}
+	abb_in_order(abb_ip,imprimir,NULL,inicio,final);
 	printf("OK\n");
-	abb_iter_in_destruir(iter);
 }
 
 void ver_mas_visitados(hash_t* hash_resources,int n){
@@ -255,10 +264,10 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
  * devuelve NULL. Si el archivo existe y esta vacio devuelve una lista
  * vacia.
  */
-void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
+bool agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	FILE* archivo = fopen(file,"r");
 	if (archivo == NULL)
-		return;
+		return false;
 
 	char* linea = NULL; size_t capacidad = 0; //combo getline
 	char** strv;
@@ -276,7 +285,9 @@ void agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	if(ok && ok2){
 		ver_dos(abb_ip);
 		printf("OK\n");
+        return true;
 	}
+    return false;
 }
 
 /* *****************************************************************
@@ -293,9 +304,16 @@ int main(int argc, char* argv[]){
 
     while(getline(&buffer, &buffersize, stdin) > 0){
 		char** strv = split(buffer,' ');
-		if(verificar_comando(strv,2, "agregar_archivo"))agregar_archivo(abb_ip, hash_resources, strv[1]);
-		if(verificar_comando(strv,3, "ver_visitantes"))	ver_visitantes(abb_ip,strv[1],strv[2]);
-		if(verificar_comando(strv,2, "ver_mas_visitados") && es_numero(strv[1])) {
+		 if (verificar_comando(strv, 2, AGREGAR)) {
+            if (!agregar_archivo(abb_ip, hash_resources, strv[1])) {
+                fprintf(stderr, ERROR, strv[0]);
+            }
+        }
+        if (verificar_comando(strv, 3, VISITANTES)){
+            ver_visitantes(abb_ip, strv[1], strv[2]);
+        }
+
+		if(verificar_comando(strv,2, VISITADOS) && es_numero(strv[1])) {
 			int n = (int) strtol(strv[1], NULL, 10);
 			ver_mas_visitados(hash_resources, n);
 		}
