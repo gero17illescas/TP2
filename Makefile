@@ -13,7 +13,7 @@ HFILES = strutil.h heap.h hash.h abb.h pila.h lista.h cola.h
 
 CC = gcc
 CFLAGS = -g -std=c99 -Wall
-CFLAGS += -Wconversion -Wno-sign-conversion -Werror -Wbad-function-cast -Wshadow
+CFLAGS += -Wconversion -Wno-sign-conversion -pedantic -Werror -Wconversion -Wbad-function-cast -Wshadow
 CFLAGS += -Wpointer-arith -Wunreachable-code -Wformat=2 
 VFLAGS = --leak-check=full --track-origins=yes --show-reachable=yes
 GDBFLAGS = -tui

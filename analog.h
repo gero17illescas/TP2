@@ -13,6 +13,7 @@
 #include "heap.h"
 #include "cola.h"
 #include "pila.h"
+#include "math.h"
 
 struct recurso;
 struct solicitud;

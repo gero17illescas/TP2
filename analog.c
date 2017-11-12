@@ -174,23 +174,20 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
     if(solicitud){
         if(solicitud->dos)    return true;
 
-        time_t* fecha_actual = crear_fecha(fecha);
-        double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),*fecha_actual);
+		time_t* fecha_actual = crear_fecha(fecha);
+		cola_encolar(solicitud->fechas, fecha_actual);
+		solicitud->cant_solicitudes++;
 
+		double dif_tiempo = fabs(difftime(*(time_t*)cola_ver_primero(solicitud->fechas),*fecha_actual));
+		
         if(dif_tiempo<2) {
-            cola_encolar(solicitud->fechas, fecha_actual);
-            solicitud->cant_solicitudes++;
+			if(solicitud->cant_solicitudes > 4)
+				solicitud->dos = true;
         }else{
-            while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), *fecha_actual) >= 2){
-				time_t* aux = cola_desencolar(solicitud->fechas);
-				free(aux);
-                solicitud->cant_solicitudes--;
-			}
-			free(fecha_actual);
+			time_t* aux = cola_desencolar(solicitud->fechas);
+			free(aux);
+            solicitud->cant_solicitudes--;
         }
-        if(solicitud->cant_solicitudes > 4)
-			solicitud->dos = true;
-            
         return true;
     }
 
