@@ -52,8 +52,12 @@ int cmp_ip(const char* ip1, const char* ip2){
 
 	int i = 0;
 	int j = 0;
+
 	while(i==0 && j<4){
-		i = strcmp(strv_1[j],strv_2[j]);
+		int aux_1=atoi(strv_1[j]);
+		int aux_2=atoi(strv_2[j]);
+		if(aux_1>aux_2)	i=1;
+		if(aux_1<aux_2)	i=-1;
 		j++;
 	}
 
@@ -95,7 +99,7 @@ bool verificar_comando(char** strv, size_t strvc,char* comando){
 
 
 void destruir_solicitud(solicitud_t* solicitud){
-    cola_destruir(solicitud->fechas, NULL);
+    cola_destruir(solicitud->fechas, free);
     free(solicitud);
 }
 /*
@@ -119,15 +123,27 @@ time_t* crear_fecha(const char* fecha){
  */
 solicitud_t* crear_solicitud(const char* fecha){
 	solicitud_t* solicitud =  malloc(sizeof(solicitud_t));
-	if(!solicitud) return NULL;
+	if(!solicitud) 
+		return NULL;
+
     cola_t* cola = cola_crear();
-    if(!cola) return NULL;
+	if(!cola){
+		free(solicitud);
+		return NULL;
+	}
+
+	time_t* fecha_nueva = crear_fecha(fecha);
+    if(!fecha_nueva) {
+		free(solicitud);
+		cola_destruir(cola,NULL);
+		return NULL;
+	}
+
 	solicitud->dos = false;
 	solicitud->fechas = cola;
-    time_t* fecha_nueva = crear_fecha(fecha);
-    if(!fecha_nueva) return NULL;
-    cola_encolar(solicitud->fechas, fecha_nueva);
     solicitud->cant_solicitudes = 1;
+    cola_encolar(solicitud->fechas, fecha_nueva);
+
 	return solicitud;
 }
 
@@ -162,16 +178,19 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
         double dif_tiempo = difftime(*(time_t*)cola_ver_primero(solicitud->fechas),*fecha_actual);
 
         if(dif_tiempo<2) {
-            cola_encolar(solicitud->fechas, &fecha_actual);
+            cola_encolar(solicitud->fechas, fecha_actual);
             solicitud->cant_solicitudes++;
         }else{
             while(difftime(*(time_t*)cola_ver_primero(solicitud->fechas), *fecha_actual) >= 2){
-                cola_desencolar(solicitud->fechas);
+				time_t* aux = cola_desencolar(solicitud->fechas);
+				free(aux);
                 solicitud->cant_solicitudes--;
-            }
+			}
+			free(fecha_actual);
         }
         if(solicitud->cant_solicitudes > 4)
-            solicitud->dos = true;
+			solicitud->dos = true;
+            
         return true;
     }
 
@@ -185,16 +204,16 @@ bool analizar_dos (abb_t* abb_ip,char** strv){
 /*
  * Actualiza en un hash los contadores correspondientes a los recursos.
  */
-bool analizar_resources(hash_t* hash_resources,char** strv){
-	char* resource = strv[3];
-    int* cont = hash_obtener(hash_resources,resource);
+bool analizar_recurso(hash_t* hash,char* recurso){
+
+	int* cont = hash_obtener(hash,recurso);
 	if(cont){
 		(*cont)++;
-		return hash_guardar(hash_resources,resource,cont);
+		return true;
 	}
-	cont = malloc(sizeof(int*));
+	cont = malloc(sizeof(int)*1);
 	*cont = 1;
-	return hash_guardar(hash_resources,resource,cont);
+	return hash_guardar(hash,recurso,cont);
 
 }
 /* 
@@ -210,6 +229,7 @@ void ver_dos(abb_t* abb_ip){
 			printf("DoS: %s\n",ip);
 		abb_iter_in_avanzar(iter);
 	}
+	abb_iter_in_destruir(iter);
 }
 
 bool imprimir(const char* dato,void* extra,void*extra_1){
@@ -218,25 +238,25 @@ bool imprimir(const char* dato,void* extra,void*extra_1){
 }
 
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
+	printf("Vistitantes:\n");
 	abb_in_order(abb_ip,imprimir,NULL,inicio,final);
 	printf("OK\n");
 }
 
-void ver_mas_visitados(hash_t* hash_resources,int n){
+void ver_mas_visitados(hash_t* hash,int n){
 	
-	hash_iter_t* iter = hash_iter_crear(hash_resources);
+	hash_iter_t* iter = hash_iter_crear(hash);
 	heap_t* heap = heap_crear((cmp_func_t) cmp_heap);
 	int i=0;
 
 	while(!hash_iter_al_final(iter) && i<n){
-		recurso_t* recurso = crear_recurso(hash_resources,iter);
+		recurso_t* recurso = crear_recurso(hash,iter);
 		heap_encolar(heap,recurso);
 		hash_iter_avanzar(iter);
 		i++;
 	}
 	while(!hash_iter_al_final(iter)){
-
-		recurso_t* recurso = crear_recurso(hash_resources,iter);
+		recurso_t* recurso = crear_recurso(hash,iter);
 		recurso_t* aux = heap_ver_max(heap);
 		if(recurso->cant > aux->cant){ //es ver_min
 			aux = heap_desencolar(heap);
@@ -247,14 +267,19 @@ void ver_mas_visitados(hash_t* hash_resources,int n){
 
 		hash_iter_avanzar(iter);
 	}
-
+	pila_t* pila = pila_crear();
 	printf("Sitios más visitados:\n");
 	for(i=0;i<n;i++){
-		recurso_t* aux = heap_desencolar(heap);
+		pila_apilar(pila,heap_desencolar(heap));
+	}
+	for(i=0;i<n;i++){
+		recurso_t* aux =pila_desapilar(pila);
 		printf("\t%s - %d\n",aux->nombre,aux->cant);
+		free(aux);
 	}
 
-	
+	pila_destruir(pila);
+	hash_iter_destruir(iter);
 	heap_destruir(heap,free); //es un simple free puesto que no quiero liberar la cadena
 	printf("OK\n");
 }
@@ -277,7 +302,7 @@ bool agregar_archivo(abb_t* abb_ip, hash_t* hash_resources, char* file){
 	while(getline(&linea,&capacidad, archivo) > 0){
 		strv = split(linea,'\t');
 		ok = analizar_dos(abb_ip,strv);
-		ok2= analizar_resources(hash_resources,strv);
+		ok2= analizar_recurso(hash_resources,strv[3]);
         free_strv(strv);
 	}
 	free(linea);
@@ -300,34 +325,34 @@ int main(int argc, char* argv[]){
     if(!buffer)
         return 0;
 
-	hash_t* hash_resources = hash_crear(free);
-	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) free);
+	hash_t* hash_recursos = hash_crear(free);
+	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) destruir_solicitud);
 
     while(getline(&buffer, &buffersize, stdin) > 0){
 		char** strv = split(buffer,' ');
 		if (verificar_comando(strv, 2, AGREGAR)) {
-            if (!agregar_archivo(abb_ip, hash_resources, strv[1])) {
-                free(buffer);
+            if (agregar_archivo(abb_ip, hash_recursos, strv[1])) {
+				free_strv(strv);
                 continue;
             }
         }
         if (verificar_comando(strv, 3, VISITANTES)){
 			ver_visitantes(abb_ip, strv[1], strv[2]);
-			free(buffer);
+			free_strv(strv);
             continue;
         }
 
 		if(verificar_comando(strv,2, VISITADOS) && es_numero(strv[1])) {
 			int n = (int) strtol(strv[1], NULL, 10);
-			ver_mas_visitados(hash_resources, n);
-			free(buffer);
+			ver_mas_visitados(hash_recursos, n);
+			free_strv(strv);
             continue;
 		}
-		free(buffer);
         fprintf(stderr, ERROR, strv[0]);
 		free_strv(strv);
 	}
-	hash_destruir(hash_resources);
+	free(buffer);
+	hash_destruir(hash_recursos);
 	abb_destruir(abb_ip);
 	return 0;
 }

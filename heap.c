@@ -135,7 +135,7 @@ heap_t* heap_crear(cmp_func_t cmp){
 	heap->cmp = cmp;
 	heap->tam = TAM_INICIAL;
 	heap->cant = 0;
-	heap->tabla = malloc(sizeof(void*)*heap->tam);
+	heap->tabla = calloc(sizeof(void*)*heap->tam,heap->tam);
 
 	if(!heap->tabla){
 		free(heap);
