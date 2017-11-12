@@ -250,14 +250,19 @@ void abb_destruir(abb_t *arbol){
 bool _abb_in_order(abb_nodo_t* nodo, bool visitar(const char*, void*, void*), void* extra,char* inicio,char* final,abb_comparar_clave_t cmp){
 	if(!nodo) 
 		return true;
-	int i = cmp(nodo->clave, inicio);
-	
+	int i = cmp(nodo->clave, inicio);//necesito que sea 1,0 para quye este dentro del intervalo
+	int f = cmp(nodo->clave, final);//necesito que sea -1.0 para quye este dentro del intervalo
+
 	if(i < 0)	//si el nodo es mas chico que el inicio me voy hacia la derecha
-		if(visitar(nodo->clave,nodo->dato,extra))
-			return _abb_in_order(nodo->der,visitar,extra,inicio,final,cmp);
-	if(i > 0)	//si el nodo es mas grande que el final me voy hacia la izquierda
-		if(!_abb_in_order(nodo->izq,visitar,extra,inicio,final,cmp));
-			return false;
+		return _abb_in_order(nodo->der,visitar,extra,inicio,final,cmp);
+	
+	if(f > 0)	//si el nodo es mas grande que el final me voy hacia la izquierda
+		return _abb_in_order(nodo->izq,visitar,extra,inicio,final,cmp);
+		
+	if(!_abb_in_order(nodo->izq,visitar,extra,inicio,final,cmp))
+		return false;
+	if(visitar(nodo->clave,nodo->dato,extra))
+		return _abb_in_order(nodo->der,visitar,extra,inicio,final,cmp);
 	return false;
 }
 void abb_in_order(abb_t* arbol, bool visitar(const char*, void*, void*), void* extra,char* inicio,char* final){

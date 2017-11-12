@@ -94,7 +94,6 @@ bool verificar_comando(char** strv, size_t strvc,char* comando){
 }
 
 
-
 void destruir_solicitud(solicitud_t* solicitud){
     cola_destruir(solicitud->fechas, NULL);
     free(solicitud);
@@ -212,10 +211,12 @@ void ver_dos(abb_t* abb_ip){
 		abb_iter_in_avanzar(iter);
 	}
 }
+
 bool imprimir(const char* dato,void* extra,void*extra_1){
 	printf("\t%s\n",dato);
 	return true;
 }
+
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
 	abb_in_order(abb_ip,imprimir,NULL,inicio,final);
 	printf("OK\n");
@@ -304,20 +305,26 @@ int main(int argc, char* argv[]){
 
     while(getline(&buffer, &buffersize, stdin) > 0){
 		char** strv = split(buffer,' ');
-		 if (verificar_comando(strv, 2, AGREGAR)) {
+		if (verificar_comando(strv, 2, AGREGAR)) {
             if (!agregar_archivo(abb_ip, hash_resources, strv[1])) {
-                fprintf(stderr, ERROR, strv[0]);
+                free(buffer);
+                continue;
             }
         }
         if (verificar_comando(strv, 3, VISITANTES)){
-            ver_visitantes(abb_ip, strv[1], strv[2]);
+			ver_visitantes(abb_ip, strv[1], strv[2]);
+			free(buffer);
+            continue;
         }
 
 		if(verificar_comando(strv,2, VISITADOS) && es_numero(strv[1])) {
 			int n = (int) strtol(strv[1], NULL, 10);
 			ver_mas_visitados(hash_resources, n);
+			free(buffer);
+            continue;
 		}
-        free(buffer);
+		free(buffer);
+        fprintf(stderr, ERROR, strv[0]);
 		free_strv(strv);
 	}
 	hash_destruir(hash_resources);
