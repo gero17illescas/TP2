@@ -254,6 +254,7 @@ void ver_mas_visitados(hash_t* hash,int n){
 		hash_iter_avanzar(iter);
 		i++;
 	}
+
 	while(!hash_iter_al_final(iter)){
 		recurso_t* recurso = crear_recurso(hash,iter);
 		recurso_t* aux = heap_ver_max(heap);
@@ -268,11 +269,12 @@ void ver_mas_visitados(hash_t* hash,int n){
 	}
 	pila_t* pila = pila_crear();
 	printf("Sitios más visitados:\n");
-	for(i=0;i<n;i++){
+	for(i=0;i<n && !heap_esta_vacio(heap);i++){
 		pila_apilar(pila,heap_desencolar(heap));
 	}
 	for(i=0;i<n;i++){
 		recurso_t* aux =pila_desapilar(pila);
+		if(!aux)	break;
 		printf("\t%s - %d\n",aux->nombre,aux->cant);
 		free(aux);
 	}
