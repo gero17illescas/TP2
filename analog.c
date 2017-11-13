@@ -222,8 +222,11 @@ void ver_dos(abb_t* abb_ip){
 	while(!abb_iter_in_al_final(iter)){
 		const char* ip = abb_iter_in_ver_actual(iter);
 		solicitud_t* solicitud = abb_obtener(abb_ip,ip);
-		if(solicitud->dos)
-			printf("DoS: %s\n",ip);
+		if(solicitud->dos) {
+            printf("DoS: %s\n", ip);
+            solicitud->cant_solicitudes = 1;
+            solicitud->dos = false;
+        }
 		abb_iter_in_avanzar(iter);
 	}
 	abb_iter_in_destruir(iter);
@@ -321,7 +324,7 @@ int main(int argc, char* argv[]){
     char* buffer  = malloc(sizeof(char) * buffersize);
     if(!buffer)
         return 0;
-
+    
 	hash_t* hash_recursos = hash_crear(free);
 	abb_t* abb_ip = abb_crear(cmp_ip,(abb_destruir_dato_t) destruir_solicitud);
 
