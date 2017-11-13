@@ -1,4 +1,3 @@
-ver_mas_visitados 9
 agregar_archivo access001.log
 agregar_archivo access002.log
 agregar_archivo access003.log
@@ -8,5 +7,3 @@ agregar_archivo access006.log
 agregar_archivo access007.log
 agregar_archivo access008.log
 agregar_archivo access009.log
-ver_mas_visitados 25
-ver_visitantes 201.30.0.0 200.49.0.0
