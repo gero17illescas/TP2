@@ -244,7 +244,6 @@ void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
 }
 
 void ver_mas_visitados(hash_t* hash,int n){
-	
 	hash_iter_t* iter = hash_iter_crear(hash);
 	heap_t* heap = heap_crear((cmp_func_t) cmp_heap);
 	int i=0;
@@ -258,7 +257,7 @@ void ver_mas_visitados(hash_t* hash,int n){
 	while(!hash_iter_al_final(iter)){
 		recurso_t* recurso = crear_recurso(hash,iter);
 		recurso_t* aux = heap_ver_max(heap);
-		if(recurso->cant > aux->cant){ //es ver_min
+		if(aux && recurso->cant > aux->cant){ //es ver_min
 			aux = heap_desencolar(heap);
 			free(aux);
 			heap_encolar(heap,recurso);
