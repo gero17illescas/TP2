@@ -7,3 +7,4 @@ agregar_archivo access006.log
 agregar_archivo access007.log
 agregar_archivo access008.log
 agregar_archivo access009.log
+ver_mas_visitados 10

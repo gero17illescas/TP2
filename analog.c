@@ -238,10 +238,10 @@ void ver_dos(abb_t* abb_ip){
 
 		if(solicitud->dos){
 			printf("DoS: %s\n", ip);
-			solicitud->cant_solicitudes = 1;
+			solicitud->cant_solicitudes = 0;
 			solicitud->dos = false;
-			//cola_destruir(solicitud->fechas,free);
-			//solicitud->fechas=cola_crear();
+			cola_destruir(solicitud->fechas,free);
+			solicitud->fechas=cola_crear();
 		}
 		abb_iter_in_avanzar(iter);
 	}
@@ -288,7 +288,7 @@ void ver_mas_visitados(hash_t* hash,int n){
 		return;
 	}
 	pila_t* pila = pila_crear();
-	if(pila){
+	if(!pila){
 		hash_iter_destruir(iter);
 		heap_destruir(heap,NULL);
 		return;
@@ -320,9 +320,9 @@ void ver_mas_visitados(hash_t* hash,int n){
 
 	printf("Sitios más visitados:\n");
 
-	for(i=0;i<n && !heap_esta_vacio(heap);i++)
+	for(i=0;i<n && !heap_esta_vacio(heap);i++){
 		pila_apilar(pila,heap_desencolar(heap));
-
+	}
 	for(i=0;i<n;i++){
 		recurso_t* aux = pila_desapilar(pila);
 		if(!aux)
