@@ -238,7 +238,7 @@ bool imprimir(const char* dato,void* extra,void*extra_1){
 }
 
 void ver_visitantes(abb_t* abb_ip,char* inicio,char* final){
-	printf("Vistitantes:\n");
+	printf("Visitantes:\n");
 	abb_in_order(abb_ip,imprimir,NULL,inicio,final);
 	printf("OK\n");
 }
